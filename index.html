@@ -1,12 +1,66 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My First WebGL App</title>
-</head>
-<body>
-    <canvas id="glCanvas" width="800" height="600"></canvas>
-    <script src="app.js"></script>
-</body>
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Supabase Float Display</title>
+    <style>
+      body { font-family: system-ui, Arial, sans-serif; padding: 24px; }
+      #value { font-size: 2rem; font-weight: 700; }
+      #status { margin-top: 10px; opacity: 0.8; }
+    </style>
+  </head>
+
+  <body>
+    <h1>Latest value</h1>
+    <div id="value">—</div>
+    <div id="status"></div>
+
+    <script type="module">
+      import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+      // 1) Paste your own values here:
+      const SUPABASE_URL = "https://dajriuadyxtpvyjnwswi.supabase.co";
+      const SUPABASE_ANON_KEY = "sb_publishable_qC0egxpx16mXSQmmL6ZYdQ_ST0k6fS3";
+
+      const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      const valueEl = document.getElementById("value");
+      const statusEl = document.getElementById("status");
+
+      async function loadLatestValue() {
+        statusEl.textContent = "Loading...";
+
+        // 2) Edit these to match your table/columns:
+        const TABLE = "metrics";
+        const FLOAT_COL = "value";
+        const TIME_COL = "created_at"; // change if yours is different
+
+        const { data, error } = await supabase
+          .from(TABLE)
+          .select(FLOAT_COL)
+          .order(TIME_COL, { ascending: false })
+          .limit(1)
+          .maybeSingle(); // returns one object or null
+
+        if (error) {
+          valueEl.textContent = "Error";
+          statusEl.textContent = error.message;
+          return;
+        }
+
+        if (!data) {
+          valueEl.textContent = "No rows yet";
+          statusEl.textContent = "Your table returned 0 rows.";
+          return;
+        }
+
+        valueEl.textContent = data[FLOAT_COL];
+        statusEl.textContent = "Updated from Supabase ✔";
+      }
+
+      loadLatestValue();
+    </script>
+  </body>
 </html>
+
